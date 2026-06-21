@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Login</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        h1 { text-align: center; }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input {
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        button, input[type="submit"] {
+            padding: 12px;
+            cursor: pointer;
+        }
+
+        .github-btn {
+            margin-top: 15px;
+            width: 100%;
+            background: #24292e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+        }
+
+        #message {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Login</h1>
+
+<form id="loginForm">
+    <label>Email</label>
+    <input type="email" id="email" required>
+
+    <label>Password</label>
+    <input type="password" id="password" required>
+
+    <input type="submit" value="Login">
+</form>
+
+<button class="github-btn" id="githubLoginBtn">
+    Login with GitHub
+</button>
+
+<div id="message"></div>
+
+<script>
+    ////dit is een test van AI want helemaal niks fucking werkt en ik word gek......
+        const message = document.getElementById("message");
+
+        // =========================
+        // LOGIN (FIXED)
+        // =========================
+        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const payload = {
+                username: "Karel",
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value
+            };
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/memory/login`, {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+
+                // ❗ IMPORTANT: backend returns RAW JWT, not JSON
+                const token = await response.text();
+
+                if (response.status === 200 && token) {
+                    localStorage.setItem("token", token);
+
+                    message.style.color = "green";
+                    message.textContent = "Login successful! Redirecting...";
+
+                    setTimeout(() => {
+                        window.location.href = "index.html";
+                    }, 1000);
+                } else {
+                    message.style.color = "red";
+                    message.textContent = "Login failed";
+                }
+
+            } catch (err) {
+                message.style.color = "red";
+                message.textContent = "Could not connect to server";
+                console.error(err);
+            }
+        });
+
+        // =========================
+        // GITHUB LOGIN
+        // =========================
+        document.getElementById("githubLoginBtn").addEventListener("click", () => {
+            window.location.href = `http://127.0.0.1:8000/connect/github`;
+        });
+
+        // =========================
+        // HANDLE GITHUB CALLBACK
+        // (JWT komt meestal terug als redirect + query param of body)
+        // =========================
+        (function handleGithub() {
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get("token");
+
+            if (token) {
+                localStorage.setItem("token", token);
+
+                message.style.color = "green";
+                message.textContent = "GitHub login successful! Redirecting...";
+
+                window.history.replaceState({}, document.title, "/login.html");
+
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 1000);
+            }
+        })();
+</script>
+
+</body>
+</html>

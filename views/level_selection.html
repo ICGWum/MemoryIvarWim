@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Level Selection</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial;--gap:14px}
+    body{padding:24px;display:flex;flex-direction:column;gap:20px}
+    h1{margin:0 0 8px 0}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--gap)}
+    .tile{background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;transition:transform .12s,box-shadow .12s}
+    .tile:hover{transform:translateY(-4px);box-shadow:0 6px 18px rgba(0,0,0,.08)}
+    .tile .thumb{width:120px;height:80px;border-radius:6px;background:#f2f2f2;display:flex;align-items:center;justify-content:center;font-size:28px}
+    .controls{display:flex;gap:12px;flex-wrap:wrap}
+    .difficulty{padding:10px 14px;border-radius:8px;border:1px solid #d0d0d0;background:#fafafa;cursor:pointer}
+    .difficulty.selected{background:#0078d4;color:white;border-color:transparent}
+    .hint{font-size:13px;color:#666}
+    .start{margin-top:14px;padding:10px 14px;border-radius:8px;background:#1a73e8;color:white;border:none;cursor:pointer}
+    .tooltip{font-size:12px;color:#333;opacity:0.95}
+  </style>
+</head>
+<body>
+  <h1>Select Level & Difficulty</h1>
+
+  <div>
+    <strong>1) Select which region to play</strong>
+    <div class="grid" id="continentGrid">
+      <div class="tile" data-continent="World">
+        <div class="thumb">🌍</div>
+        <div>Whole World</div>
+      </div>
+      <div class="tile" data-continent="Africa">
+        <div class="thumb">🌍</div>
+        <div>Africa</div>
+      </div>
+      <div class="tile" data-continent="Asia">
+        <div class="thumb">🌏</div>
+        <div>Asia</div>
+      </div>
+      <div class="tile" data-continent="Europe">
+        <div class="thumb">🌍</div>
+        <div>Europe</div>
+      </div>
+      <div class="tile" data-continent="Americas">
+        <div class="thumb">🌎</div>
+        <div>Americas</div>
+      </div>
+      <div class="tile" data-continent="Oceania">
+        <div class="thumb">🌊</div>
+        <div>Oceania</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <strong>2) Select difficulty</strong>
+     <div class="hint">Hover a difficulty for details.</div>
+    <div class="controls" id="difficultyControls">
+      <div class="difficulty" data-difficulty="Easy" title="Flag + common outlines">Easy</div>
+      <div class="difficulty" data-difficulty="Normal" title="Flag + all outlines">Normal</div>
+      <div class="difficulty" data-difficulty="Hard" title="Flag + outlines + capital name">Hard</div>
+      <div class="difficulty" data-difficulty="Extreme" title="Flag + outline + capital name + capital outline">Extreme</div>
+    </div>
+  </div>
+
+  <button class="start" id="startBtn">Start Game</button>
+
+  <script>
+    const CONT_KEY = 'miw_selected_continent';
+    const DIFF_KEY = 'miw_selected_difficulty';
+
+    let selectedContinent = localStorage.getItem(CONT_KEY) ?? 'World';
+    let selectedDifficulty = localStorage.getItem(DIFF_KEY) ?? 'Easy';
+
+    document.querySelectorAll('#continentGrid .tile').forEach(tile => {
+      const continent = tile.dataset.continent;
+      if (continent === selectedContinent) tile.style.borderColor = '#1a73e8';
+      tile.addEventListener('click', () => {
+        selectedContinent = continent;
+        localStorage.setItem(CONT_KEY, selectedContinent);
+        document.querySelectorAll('#continentGrid .tile').forEach(t => t.style.borderColor = '#ddd');
+        tile.style.borderColor = '#1a73e8';
+      });
+    });
+
+    function setDifficultySelection() {
+      document.querySelectorAll('.difficulty').forEach(d => {
+        const name = d.dataset.difficulty;
+        d.classList.toggle('selected', name === selectedDifficulty);
+      });
+    }
+
+    document.querySelectorAll('.difficulty').forEach(d => {
+      d.addEventListener('click', () => {
+        selectedDifficulty = d.dataset.difficulty;
+        localStorage.setItem(DIFF_KEY, selectedDifficulty);
+        setDifficultySelection();
+      });
+      d.addEventListener('mouseenter', () => {
+        // use the title attribute as tooltip; optionally show custom tooltip UI
+      });
+    });
+
+    setDifficultySelection();
+
+    document.getElementById('startBtn').addEventListener('click', () => {
+      // guarantee keys saved, then redirect to game
+      localStorage.setItem(CONT_KEY, selectedContinent);
+      localStorage.setItem(DIFF_KEY, selectedDifficulty);
+      window.location.href = 'game.html';
+    });
+  </script>
+</body>
+</html>
