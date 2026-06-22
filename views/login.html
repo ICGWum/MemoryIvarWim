@@ -52,8 +52,8 @@
 <h1>Login</h1>
 
 <form id="loginForm">
-    <label>Email</label>
-    <input type="email" id="email" required>
+    <label>Username</label>
+    <input type="text" id="username" required>
 
     <label>Password</label>
     <input type="password" id="password" required>
@@ -67,82 +67,89 @@
 
 <div id="message"></div>
 
+<p><a href="index.html">Back to the front page</a></p>
+
 <script>
-    ////dit is een test van AI want helemaal niks fucking werkt en ik word gek......
-        const message = document.getElementById("message");
+    const message = document.getElementById("message");
 
-        // =========================
-        // LOGIN (FIXED)
-        // =========================
-        document.getElementById("loginForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-            const payload = {
-                username: "Karel",
-                email: document.getElementById("email").value,
-                password: document.getElementById("password").value
-            };
+        const payload = {
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value
+        };
 
-            try {
-                const response = await fetch(`http://127.0.0.1:8000/memory/login`, {
-                    method: "POST",
-                    body: JSON.stringify(payload)
-                });
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/memory/login`, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
 
-                // ❗ IMPORTANT: backend returns RAW JWT, not JSON
-                const token = await response.text();
+            const token = await response.json();
+            console.log(response);
 
-                if (response.status === 200 && token) {
-                    localStorage.setItem("token", token);
-
-                    message.style.color = "green";
-                    message.textContent = "Login successful! Redirecting...";
-
-                    setTimeout(() => {
-                        window.location.href = "index.html";
-                    }, 1000);
-                } else {
-                    message.style.color = "red";
-                    message.textContent = "Login failed";
-                }
-
-            } catch (err) {
-                message.style.color = "red";
-                message.textContent = "Could not connect to server";
-                console.error(err);
-            }
-        });
-
-        // =========================
-        // GITHUB LOGIN
-        // =========================
-        document.getElementById("githubLoginBtn").addEventListener("click", () => {
-            window.location.href = `http://127.0.0.1:8000/connect/github`;
-        });
-
-        // =========================
-        // HANDLE GITHUB CALLBACK
-        // (JWT komt meestal terug als redirect + query param of body)
-        // =========================
-        (function handleGithub() {
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get("token");
-
-            if (token) {
-                localStorage.setItem("token", token);
+            if (response.status === 200 && token) {
+                localStorage.setItem("token", token.token);
 
                 message.style.color = "green";
-                message.textContent = "GitHub login successful! Redirecting...";
-
-                window.history.replaceState({}, document.title, "/login.html");
+                message.textContent = "Login successful! Redirecting...";
 
                 setTimeout(() => {
                     window.location.href = "index.html";
                 }, 1000);
+            } else {
+                message.style.color = "red";
+                message.textContent = "Login failed. Please try again.";
+                console.error("Login failed");
             }
-        })();
+
+        } catch (err) {
+            message.style.color = "red";
+            message.textContent = "Could not connect to server.";
+            console.error(err);
+        }
+    });
+
+    document.getElementById("githubLoginBtn").addEventListener("click", () => {
+        window.location.href = `http://127.0.0.1:8000/connect/github`;
+    });
+
+    (function handleGithub() {
+    if (window.location.href.includes("/connect/github/check")) {
+
+        fetch(window.location.href)
+            .then(res => res.json())
+            .then(data => {
+                if (data.token) {
+                    localStorage.setItem("token", data.token);
+
+                    window.location.href = "index.html";
+                }
+            });
+
+        return;
+    }
+
+    // normale flow (bij redirect met query params - blijft bestaan)
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+
+    if (token) {
+        localStorage.setItem("token", token);
+
+        message.style.color = "green";
+        message.textContent = "GitHub login successful! Redirecting...";
+
+        window.history.replaceState({}, document.title, "/login.html");
+
+        setTimeout(() => {
+            window.location.href = "index.html";
+        }, 1000);
+    }
+})();
 </script>
 
+<script src="../scripts/auth.js"></script>
 </body>
 </html>
