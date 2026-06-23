@@ -1,11 +1,3 @@
-//first get level: meaning which region to use and get country's from.
-
-//then get difficulty
-//when diff = easy, use list of country names premade.
-//when diff = normal, get list of country names from api.
-//when diff = hard, get list of country names from api and add capitals to the list.
-//when diff = extreme, get list of country names from api and add capitals to the list.
-
 const RESTCOUNTRIES_KEY = "rc_live_b20feb4284d34250b68f52c8784246d3";
 
 let countriesGeo;
@@ -17,15 +9,14 @@ async function setupGeoMap() {
         const iso = f.properties["ISO3166-1-Alpha-3"];
         countryMap.set(iso, f);
     });
-    console.log("Loaded country geo data:", countriesGeo);
-    console.log("ISO sample keys:", [...countryMap.keys()].slice(0, 20));
 }
 
 let region = "europe";
 let countryCount = 10;
 
-let difficulty = "easy";
+let difficulty = "Easy";
 let difficultyNumber = 1;
+
 function getDifficultyNumber(diff) {
     difficultyNumber =
         diff === "Easy" ? 1 :
@@ -33,13 +24,69 @@ function getDifficultyNumber(diff) {
         diff === "Hard" ? 3 :
         diff === "Extreme" ? 4 :
         1;
-    }
+}
 
 let cards = [];
 
-//premade list of country names for each region for easy mode, normal mode will use api
-function getCountriesForRegionOnEasy(region) {
-    switch (region) {
+function normalizeRegion(value) {
+    return String(value ?? "Europe").trim().toLowerCase();
+}
+
+function formatRegionLabel(value) {
+    const normalized = normalizeRegion(value);
+    const labels = {
+        world: "World",
+        africa: "Africa",
+        asia: "Asia",
+        europe: "Europe",
+        americas: "Americas",
+        oceania: "Oceania"
+    };
+
+    return labels[normalized] ?? normalized;
+}
+
+function isLoggedIn() {
+    return Boolean(localStorage.getItem("token"));
+}
+
+function getScorePayload() {
+    const time = getElapsedSeconds();
+
+    return {
+        score: attempts + time,
+        api: `${region}-${difficulty}`,
+        color_found: "",
+        color_closed: ""
+    };
+}
+
+async function saveScoreIfLoggedIn() {
+    if (!isLoggedIn() || scoreSaved) {
+        return;
+    }
+
+    scoreSaved = true;
+
+    const payload = getScorePayload();
+
+    try {
+        await fetch('http://127.0.0.1:8000/game/save', {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+
+        saveStatusElement.textContent = "Score opgeslagen.";
+    } catch (error) {
+        scoreSaved = false;
+        saveStatusElement.textContent = "Score kon niet worden opgeslagen.";
+        console.error("Failed to save score:", error);
+    }
+}
+
+// premade list of country names for each region for easy mode, normal mode will use api
+function getCountriesForRegionOnEasy(regionName) {
+    switch (regionName) {
         case "europe":
             return ["France", "Germany", "Italy", "Spain", "United Kingdom", "Poland", "Netherlands", "Belgium", "Sweden", "Norway", "Finland", "Denmark", "Switzerland", "Austria", "Portugal", "Greece", "Ireland", "Czech Republic", "Hungary", "Romania"];
         case "asia":
@@ -55,10 +102,9 @@ function getCountriesForRegionOnEasy(region) {
     }
 }
 
-async function getCountriesForRegion(region) {
-
+async function getCountriesForRegion(regionName) {
     const response = await fetch(
-        `https://api.restcountries.com/countries/v5?region=${region}&limit=100`,
+        `https://api.restcountries.com/countries/v5?region=${regionName}&limit=100`,
         {
             headers: {
                 Authorization: `Bearer ${RESTCOUNTRIES_KEY}`
@@ -66,14 +112,11 @@ async function getCountriesForRegion(region) {
         }
     );
 
-    console.log(response.status);
-
     if (!response.ok) {
         throw new Error(`API error ${response.status}`);
     }
 
     const data = await response.json();
-
     return data.data ?? data.results ?? data;
 }
 
@@ -82,12 +125,7 @@ function getRandomCountries(countries, count) {
     return shuffled.slice(0, count);
 }
 
-function getFlagForCountry(country) {
-    return country.flags.svg || country.flags.png;
-}
-
 async function getCountryOutline(cca3) {
-    console.log("Getting outline for country:", cca3);
     return countryMap.get(cca3) ?? null;
 }
 
@@ -117,18 +155,17 @@ function isValidCountry(c) {
     );
 }
 
-async function makeCardsForDifficulty(difficulty, region) {
+async function makeCardsForDifficulty(selectedDifficulty, selectedRegion) {
+    const normalizedRegion = normalizeRegion(selectedRegion);
+
     const countriesRaw =
-        difficulty === "Easy"
-            ? getCountriesForRegionOnEasy(region).map(name => ({ name }))
-            : await getCountriesForRegion(region);
+        selectedDifficulty === "Easy"
+            ? getCountriesForRegionOnEasy(normalizedRegion).map(name => ({ name }))
+            : await getCountriesForRegion(normalizedRegion);
 
     const countriesArray = countriesRaw.objects ?? countriesRaw.data ?? countriesRaw;
     const countries = countriesArray.map(normalizeCountry).filter(isValidCountry);
     const countriesWithOutline = countries.filter(c => countryMap.has(c.cca3));
-
-    console.log("RAW API:", countriesRaw);
-    console.log("NORMALIZED:", countries);
 
     const countryList = getRandomCountries(countriesWithOutline, countryCount);
 
@@ -140,7 +177,6 @@ async function makeCardsForDifficulty(difficulty, region) {
 
     const resultCards = [];
 
-    // FLAGS + COUNTRY
     flagList.forEach(item => {
         resultCards.push({
             type: "country",
@@ -156,14 +192,12 @@ async function makeCardsForDifficulty(difficulty, region) {
         });
     });
 
-    // OUTLINES
     if (difficultyNumber >= 3) {
         for (const item of flagList) {
             if (!item.cca3) continue;
 
             const geojson = await getCountryOutline(item.cca3);
-            if(!geojson) {
-                console.error("Failed to get outline for country:", item.cca3);
+            if (!geojson) {
                 continue;
             }
 
@@ -176,7 +210,6 @@ async function makeCardsForDifficulty(difficulty, region) {
         }
     }
 
-    // CAPITALS
     if (difficultyNumber >= 4) {
         countryList.forEach(country => {
             const name = country.name.common;
@@ -193,45 +226,38 @@ async function makeCardsForDifficulty(difficulty, region) {
         });
     }
 
-    const shuffledCards = shuffleCards(resultCards);
-    return shuffledCards;
+    return shuffleCards(resultCards);
 }
 
 const boardElement = document.getElementById("board");
-const attemptsElement = document.getElementById("attempts");
 const matchesElement = document.getElementById("matches");
 const messageElement = document.getElementById("message");
 const restartButton = document.getElementById("restartButton");
+const scoreElement = document.getElementById("score");
+const timePlayedElement = document.getElementById("timePlayed");
+const attemptsSideElement = document.getElementById("attemptsSide");
+const regionValueElement = document.getElementById("regionValue");
+const difficultyValueElement = document.getElementById("difficultyValue");
+const saveStatusElement = document.getElementById("saveStatus");
 
 let selectedCards = [];
-
 let lockBoard = false;
 let attempts = 0;
 let matches = 0;
+let timerInterval = null;
+let timerStartMs = null;
+let elapsedSeconds = 0;
+let scoreSaved = false;
 
 function loadTheme() {
-
-    const savedColors =
-        JSON.parse(localStorage.getItem("themeColors"));
+    const savedColors = JSON.parse(localStorage.getItem("themeColors"));
 
     if (!savedColors) return;
 
     document.body.style.background = savedColors[0];
-
-    document.documentElement.style.setProperty(
-        "--button-color",
-        savedColors[1]
-    );
-
-    document.documentElement.style.setProperty(
-        "--card-color",
-        savedColors[2]
-    );
-
-    document.documentElement.style.setProperty(
-        "--card-revealed",
-        savedColors[3]
-    );
+    document.documentElement.style.setProperty("--button-color", savedColors[1]);
+    document.documentElement.style.setProperty("--card-color", savedColors[2]);
+    document.documentElement.style.setProperty("--card-revealed", savedColors[3]);
 }
 
 function shuffleCards(values) {
@@ -245,18 +271,63 @@ function shuffleCards(values) {
     return cards;
 }
 
+function getElapsedSeconds() {
+    if (timerStartMs === null) {
+        return elapsedSeconds;
+    }
+
+    return Math.floor((Date.now() - timerStartMs) / 1000);
+}
+
 function updateScoreboard() {
-    attemptsElement.textContent = String(attempts);
+    const time = getElapsedSeconds();
+    const score = attempts + time;
+
     matchesElement.textContent = String(matches);
-    //later for adding more automatic lvls.
-    // if(matches === cards.length/selectedCardAmount()) {
-    //     currentLevel += 1;
-    //     restartGame();
-    // }
+    attemptsSideElement.textContent = String(attempts);
+    timePlayedElement.textContent = String(time);
+    scoreElement.textContent = String(score);
+}
+
+function updateGameInfo() {
+    regionValueElement.textContent = formatRegionLabel(region);
+    difficultyValueElement.textContent = difficulty;
+}
+
+function updateLoginStatus() {
+    if (isLoggedIn()) {
+        saveStatusElement.textContent = "Score wordt opgeslagen zodra je wint.";
+        saveStatusElement.classList.remove("warning");
+    } else {
+        saveStatusElement.textContent = "login om je score op te slaan.";
+        saveStatusElement.classList.add("warning");
+    }
 }
 
 function setMessage(text) {
     messageElement.textContent = text;
+}
+
+function startTimer() {
+    stopTimer();
+    elapsedSeconds = 0;
+    timerStartMs = Date.now();
+    timerInterval = window.setInterval(() => {
+        updateScoreboard();
+    }, 1000);
+    updateScoreboard();
+}
+
+function stopTimer() {
+    if (timerInterval !== null) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+
+    if (timerStartMs !== null) {
+        elapsedSeconds = Math.floor((Date.now() - timerStartMs) / 1000);
+        timerStartMs = null;
+    }
 }
 
 function resetTurn() {
@@ -279,11 +350,14 @@ function markMatch() {
     });
 
     selectedCards = [];
-    matches ++;
+    matches++;
     updateScoreboard();
 
-    if (matches === cards.length/selectedCardAmount()) {
+    if (matches === cards.length / selectedCardAmount()) {
+        stopTimer();
+        updateScoreboard();
         setMessage(`You won in ${attempts} attempts.`);
+        saveScoreIfLoggedIn();
     } else {
         setMessage("Nice. Find the next pair.");
     }
@@ -327,12 +401,12 @@ function handleCardClick(event) {
         return;
     }
 
-    attempts ++;
+    attempts++;
     updateScoreboard();
     lockBoard = true;
 
     const allMatch = selectedCards.every(
-    c => c.dataset.countryId === selectedCards[0].dataset.countryId
+        c => c.dataset.countryId === selectedCards[0].dataset.countryId
     );
 
     if (allMatch) {
@@ -370,7 +444,7 @@ function renderCardContent(card, item) {
             card.textContent = item.value;
             break;
 
-        case "flag":
+        case "flag": {
             const img = document.createElement("img");
             img.src = item.value;
             img.alt = "flag";
@@ -379,6 +453,7 @@ function renderCardContent(card, item) {
             img.style.objectFit = "contain";
             card.appendChild(img);
             break;
+        }
 
         case "capital":
             card.textContent = item.value;
@@ -393,14 +468,12 @@ function renderCardContent(card, item) {
 function renderGeoJSON(card, geojson) {
     if (!geojson) return;
 
-    // Normalize MapTiler output
     const feature =
         geojson.type === "Feature"
             ? geojson
             : geojson.features?.[0];
 
     if (!feature) {
-        console.warn("Invalid geojson:", geojson);
         return;
     }
 
@@ -434,27 +507,35 @@ async function buildBoard() {
         region = localStorage.getItem("miw_selected_continent") ?? "Europe";
         difficulty = localStorage.getItem("miw_selected_difficulty") ?? "Easy";
         getDifficultyNumber(difficulty);
-        console.log("Building board with region:", region, "and difficulty:", difficulty, "(", difficultyNumber, ")");
+
+        updateGameInfo();
+        updateLoginStatus();
 
         const cardList = await makeCardsForDifficulty(difficulty, region);
         cards = cardList;
 
-        cardList.forEach((cardListItem) => {
+        cardList.forEach(cardListItem => {
             boardElement.appendChild(createCard(cardListItem));
         });
 
-    } catch (err) {
-        console.error("Board build failed:", err);
+        startTimer();
+    } catch (error) {
+        console.error("Board build failed:", error);
+        setMessage("Could not build the board.");
     }
 }
+
 function restartGame() {
     selectedCards = [];
     lockBoard = false;
     attempts = 0;
     matches = 0;
     cards = [];
+    scoreSaved = false;
+    stopTimer();
     updateScoreboard();
     setMessage("Find every matching pair to win.");
+    updateLoginStatus();
     buildBoard();
 }
 

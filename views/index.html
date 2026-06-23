@@ -84,6 +84,8 @@
         <a class="button" href="register.html">Register Account</a>
         <a class="button" href="login.html">Login</a>
         <a class="button" href="account.html">Account</a>
+        
+        <button class="button" id="logout">Logout</button>
 
         <h2>Top 5 Players</h2>
         <ul id="topScores"></ul>
@@ -93,6 +95,13 @@
     <script>
         const colorPicker = document.getElementById("colorPicker");
         const saveTheme = document.getElementById("saveTheme");
+        const logoutButton = document.getElementById("logout");
+
+        logoutButton.addEventListener("click", async () => {
+        
+            localStorage.removeItem("token");
+
+        });
 
         saveTheme.addEventListener("click", async () => {
 
