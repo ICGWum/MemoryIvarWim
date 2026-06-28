@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Login</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="styling/login.css">
+
+</head>
+
+<body>
+
+<div class="card">
+
+    <h1>Login</h1>
+
+    <form id="loginForm">
+
+        <label>Username</label>
+        <input type="text" id="username" required>
+
+        <label>Password</label>
+        <input type="password" id="password" required>
+
+        <button class="button" type="submit">Login</button>
+
+    </form>
+
+    <button class="github" id="githubLoginBtn">
+        Login with GitHub
+    </button>
+
+    <div id="message"></div>
+
+    <a class="back" href="index.html">← Back</a>
+
+</div>
+
+<script src="../scripts/login.js"></script>
+<script src="../scripts/auth.js"></script>
+
+</body>
+</html>

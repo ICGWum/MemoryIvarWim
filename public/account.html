@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <link rel="stylesheet" href="styling/account.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Overview</title>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="profile-card">
+        <img
+            id="avatar"
+            class="avatar"
+            src="https://ui-avatars.com/api/?name=Player&background=0f172a&color=ffffff"
+            alt="Avatar"
+        >
+
+        <div class="profile-info">
+            <h1 id="username">Loading...</h1>
+
+            <div class="email-row">
+                <input id="email" type="email">
+                <button id="saveEmail">Save Email</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="card">
+            <div class="stat-title">🏆 Best Score</div>
+            <div class="stat-value" id="bestScore">0</div>
+        </div>
+
+        <div class="card">
+            <div class="stat-title">🎮 Games Played</div>
+            <div class="stat-value" id="totalGames">0</div>
+        </div>
+
+        <div class="card">
+            <div class="stat-title">📈 Average Score</div>
+            <div class="stat-value" id="averageScore">0</div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+        <h2 class="section-title">Latest Games</h2>
+
+        <div id="latestGames" class="game-list">
+            <div class="empty-games">Loading games...</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 class="section-title">Preferences</h2>
+
+        <div class="preferences">
+            <label>
+                Favorite Mode 
+                <input id="api" type="text">
+            </label>
+
+            <label>
+                Found Cards Color
+                <input id="foundColor" type="color">
+            </label>
+
+            <label>
+                Closed Cards Color
+                <input id="closedColor" type="color">
+            </label>
+
+            <button id="savePreferences">
+                Save Preferences
+            </button>
+        </div>
+    </div>
+
+    <a href="index.html" class="back-link">
+        ← Back to front page
+    </a>
+
+</div>
+
+<script src="../scripts/account.js"></script>
+<script src="../scripts/auth.js"></script>
+
+</body>
+</html>

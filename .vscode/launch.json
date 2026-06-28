@@ -9,7 +9,7 @@
             "type": "msedge",
             "request": "launch",
             "name": "Open index.html",
-            "file": "c:\\Users\\wimou\\IdeaProjects\\MemoryIvarWim\\views\\index.html"
+            "file": "c:\\Users\\wimou\\IdeaProjects\\MemoryIvarWim\\public\\views\\index.html"
         }
     ]
 }

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Level Selection</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="styling/level_selection.css" />
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1>Select Your Game</h1>
+    <div class="subtitle">Choose a region and difficulty to start playing</div>
+  </div>
+
+  <!-- CONTINENT -->
+  <div class="card">
+    <h2>🌍 Region</h2>
+
+    <div class="grid" id="continentGrid">
+
+      <div class="tile" data-continent="World">
+        <div class="thumb">🌍</div>
+        <div>World</div>
+      </div>
+
+      <div class="tile" data-continent="Africa">
+        <div class="thumb">🌍</div>
+        <div>Africa</div>
+      </div>
+
+      <div class="tile" data-continent="Asia">
+        <div class="thumb">🌏</div>
+        <div>Asia</div>
+      </div>
+
+      <div class="tile" data-continent="Europe">
+        <div class="thumb">🌍</div>
+        <div>Europe</div>
+      </div>
+
+      <div class="tile" data-continent="Americas">
+        <div class="thumb">🌎</div>
+        <div>Americas</div>
+      </div>
+
+      <div class="tile" data-continent="Oceania">
+        <div class="thumb">🌊</div>
+        <div>Oceania</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DIFFICULTY -->
+  <div class="card">
+    <h2>⚡ Difficulty</h2>
+    <div class="hint">Higher difficulty = more detail required</div>
+
+    <div class="difficulty-grid" id="difficultyGrid">
+
+      <div class="difficulty" data-difficulty="Easy">
+        Easy
+      </div>
+
+      <div class="difficulty" data-difficulty="Normal">
+        Normal
+      </div>
+
+      <div class="difficulty" data-difficulty="Hard">
+        Hard
+      </div>
+
+      <div class="difficulty" data-difficulty="Extreme">
+        Extreme
+      </div>
+
+    </div>
+  </div>
+
+  <button class="start" id="startBtn">
+    ▶ Start Game
+  </button>
+
+  <a class="back" href="index.html">← Back to home</a>
+
+</div>
+
+<script src="../scripts/level_selection.js"></script>
+<script src="../scripts/auth.js"></script>
+
+</body>
+</html>
