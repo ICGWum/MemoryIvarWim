@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GitHub Login</title>
+</head>
+<body>
+<script>
+(function () {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+
+    if (token) {
+        localStorage.setItem("token", token);
+
+        // schoon URL
+        window.history.replaceState({}, document.title, "/github-callback.html");
+
+        // doorsturen naar app
+        window.location.href = "/index.html";
+    } else {
+        document.body.innerText = "No token received.";
+    }
+})();
+</script>
+</body>
+</html>

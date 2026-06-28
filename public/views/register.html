@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Register</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 500px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 20px;
+            padding: 30px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+
+        input {
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #38bdf8;
+        }
+
+        .button {
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            background: #38bdf8;
+            color: #0f172a;
+        }
+
+        .button:hover {
+            opacity: 0.9;
+        }
+
+        #message {
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .back {
+            display: block;
+            margin-top: 15px;
+            text-align: center;
+            color: #38bdf8;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h1>Create Account</h1>
+
+    <form id="registerForm">
+
+        <label>Username</label>
+        <input type="text" id="username" required>
+
+        <label>Email</label>
+        <input type="email" id="email" required>
+
+        <label>Password</label>
+        <input type="password" id="password" required>
+
+        <button class="button" type="submit">
+            Register
+        </button>
+
+    </form>
+
+    <div id="message"></div>
+
+    <a class="back" href="index.html">← Back</a>
+
+</div>
+
+    <script>
+    document
+        .getElementById("registerForm")
+        .addEventListener("submit", async (e) => {
+
+            e.preventDefault();
+
+            const message = document.getElementById("message");
+
+            const payload = {
+                username: document.getElementById("username").value,
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value
+            };
+
+            try {
+
+                const response = await fetch(
+                    `http://127.0.0.1:8000/memory/register`,
+                    {
+                        method: "POST",
+                        body: JSON.stringify(payload)
+                    }
+                );
+
+                if (response.status === 201) {
+
+                    localStorage.setItem(
+                        "username",
+                        payload.username
+                    );
+
+                    message.style.color = "green";
+                    message.textContent =
+                        "Registration successful! Redirecting to login...";
+
+                    setTimeout(() => {
+                        window.location.href = "login.html";
+                    }, 1500);
+                } else {
+
+                    const error = await response.json();
+
+                    message.style.color = "red";
+                    message.textContent =
+                        error.error || "Registration failed";
+                }
+
+            } catch (err) {
+
+                message.style.color = "red";
+                message.textContent =
+                    "Could not connect to server";
+
+                console.error(err);
+            }
+        });
+
+    document
+        .getElementById("startBtn")
+        .addEventListener("click", () => {
+
+            if (!localStorage.getItem("difficulty")) {
+                localStorage.setItem("difficulty", "Easy");
+            }
+
+            window.location.href = "index.html";
+        });
+    </script>
+
+    <script src="../scripts/auth.js"></script>
+</body>
+</html>

@@ -11,6 +11,8 @@ async function setupGeoMap() {
     });
 }
 
+const ALL_REGIONS = ["Europe", "Asia", "Africa", "Americas", "Oceania"];
+
 let region = "europe";
 let countryCount = 10;
 
@@ -97,6 +99,9 @@ function getCountriesForRegionOnEasy(regionName) {
             return ["United States", "Brazil", "Mexico", "Argentina", "Canada", "Colombia", "Chile", "Peru", "Venezuela", "Ecuador", "Guatemala", "Cuba", "Paraguay", "Uruguay", "Jamaica", "Costa Rica"];
         case "oceania":
             return ["Australia", "New Zealand", "Fiji", "Papua New Guinea", "Samoa", "Tonga", "Vanuatu", "Solomon Islands", "Kiribati", "Marshall Islands", "Palau", "Micronesia", "Nauru", "Tuvalu", "New Caledonia"];
+        case "world":
+            return ["France", "Germany", "Italy", "Spain", "United Kingdom", "Poland", "Netherlands", "Belgium", "Sweden", "Norway", "Finland", "Denmark", "Switzerland", "Austria", "Portugal", "Greece", "Ireland", "Czech Republic", "Hungary", "Romania",
+                "China", "India", "Japan", "South Korea", "Indonesia", "Thailand", "Vietnam", "Philippines", "Singapore", "Pakistan"];
         default:
             return [];
     }
@@ -111,7 +116,7 @@ async function getCountriesForRegion(regionName) {
             }
         }
     );
-
+    
     if (!response.ok) {
         throw new Error(`API error ${response.status}`);
     }
@@ -158,13 +163,30 @@ function isValidCountry(c) {
 async function makeCardsForDifficulty(selectedDifficulty, selectedRegion) {
     const normalizedRegion = normalizeRegion(selectedRegion);
 
-    const countriesRaw =
-        selectedDifficulty === "Easy"
-            ? getCountriesForRegionOnEasy(normalizedRegion).map(name => ({ name }))
-            : await getCountriesForRegion(normalizedRegion);
+    let countriesRaw;
 
-    const countriesArray = countriesRaw.objects ?? countriesRaw.data ?? countriesRaw;
-    const countries = countriesArray.map(normalizeCountry).filter(isValidCountry);
+    if (normalizedRegion === "world") {
+    const results = await Promise.all(
+        ALL_REGIONS.map(region => getCountriesForRegion(region))
+    );
+
+    countriesRaw = results.flatMap(r => r.data ?? r.objects ?? r);
+
+    } else {
+        countriesRaw =
+            selectedDifficulty === "Easy"
+                ? getCountriesForRegionOnEasy(normalizedRegion).map(name => ({ name }))
+                : await getCountriesForRegion(normalizedRegion);
+    }
+
+    const countriesArray = Array.isArray(countriesRaw)
+    ? countriesRaw
+    : (countriesRaw.objects ?? countriesRaw.data ?? []);
+    
+    const countries = countriesArray
+        .map(normalizeCountry)
+        .filter(isValidCountry);
+    
     const countriesWithOutline = countries.filter(c => countryMap.has(c.cca3));
 
     const countryList = getRandomCountries(countriesWithOutline, countryCount);
@@ -279,9 +301,37 @@ function getElapsedSeconds() {
     return Math.floor((Date.now() - timerStartMs) / 1000);
 }
 
+function calculateScore({ difficultyMultiplier, pairs, mistakes, time }) {
+    return (
+        -(difficultyMultiplier * (pairs * 10)) +
+        (mistakes * (3 - difficultyMultiplier)) +
+        time
+    );
+}
+
+function getDifficultyMultiplier() {
+    switch (difficulty) {
+        case "Easy":
+            return 0.8;
+        case "Normal":
+            return 1;
+        case "Hard":
+            return 1.5;
+        case "Extreme":
+            return 2;
+        default:
+            return 1;
+    }
+}
+
 function updateScoreboard() {
     const time = getElapsedSeconds();
-    const score = attempts + time;
+    const score = calculateScore({
+        difficultyMultiplier: getDifficultyMultiplier(),
+        pairs: matches,
+        mistakes: attempts - matches,
+        time: time
+    });
 
     matchesElement.textContent = String(matches);
     attemptsSideElement.textContent = String(attempts);
